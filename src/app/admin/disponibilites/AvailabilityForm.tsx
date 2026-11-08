@@ -75,45 +75,51 @@ export function AvailabilityForm({ initial }: { initial: Row[] }) {
               </label>
 
               {on ? (
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <input
-                    type="time"
-                    aria-label={`${name}, ouverture`}
-                    name={`day-${weekday}-start`}
-                    defaultValue={shape?.start ?? "08:00"}
-                    className="input w-28"
-                  />
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+                  {/* Each range stays on one line, ranges wrap on small screens */}
+                  <span className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      aria-label={`${name}, ouverture`}
+                      name={`day-${weekday}-start`}
+                      defaultValue={shape?.start ?? "08:00"}
+                      className="input w-24 px-2"
+                    />
+                    <span className="text-muted">à</span>
+                    <input
+                      type="time"
+                      aria-label={hasBreak ? `${name}, début de pause` : `${name}, fermeture`}
+                      name={hasBreak ? `day-${weekday}-bstart` : `day-${weekday}-end`}
+                      defaultValue={hasBreak ? (shape?.breakStart ?? "12:00") : (shape?.end ?? "18:00")}
+                      key={hasBreak ? "bstart" : "end"}
+                      className="input w-24 px-2"
+                    />
+                  </span>
                   {hasBreak && (
-                    <>
-                      <span className="text-muted">à</span>
-                      <input
-                        type="time"
-                        aria-label={`${name}, début de pause`}
-                        name={`day-${weekday}-bstart`}
-                        defaultValue={shape?.breakStart ?? "12:00"}
-                        className="input w-28"
-                      />
-                      <span className="chip">
-                        <Coffee className="size-3.5" /> pause
-                      </span>
+                    <span className="chip">
+                      <Coffee className="size-3.5" /> pause
+                    </span>
+                  )}
+                  {hasBreak && (
+                    <span className="flex items-center gap-2">
                       <input
                         type="time"
                         aria-label={`${name}, reprise`}
                         name={`day-${weekday}-bend`}
                         defaultValue={shape?.breakEnd ?? "14:00"}
-                        className="input w-28"
+                        className="input w-24 px-2"
                       />
-                    </>
+                      <span className="text-muted">à</span>
+                      <input
+                        type="time"
+                        aria-label={`${name}, fermeture`}
+                        name={`day-${weekday}-end`}
+                        defaultValue={shape?.end ?? "18:00"}
+                        className="input w-24 px-2"
+                      />
+                    </span>
                   )}
-                  <span className="text-muted">à</span>
-                  <input
-                    type="time"
-                    aria-label={`${name}, fermeture`}
-                    name={`day-${weekday}-end`}
-                    defaultValue={shape?.end ?? "18:00"}
-                    className="input w-28"
-                  />
-                  <label className="ml-1 inline-flex cursor-pointer items-center gap-2 text-muted">
+                  <label className="inline-flex cursor-pointer items-center gap-2 text-muted">
                     <input
                       type="checkbox"
                       name={`day-${weekday}-break`}

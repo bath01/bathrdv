@@ -11,20 +11,20 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   await requireAdmin();
 
   return (
-    <div className="flex min-h-full flex-col md:flex-row">
-      <aside className="border-b border-line bg-surface md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-r md:border-b-0">
-        <div className="flex items-center justify-between px-4 py-4 md:px-5 md:py-6">
+    <div className="flex min-h-full flex-col lg:flex-row">
+      <aside className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur lg:flex lg:h-screen lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-b-0 lg:bg-surface">
+        <div className="flex items-center justify-between px-4 py-3 lg:px-5 lg:py-6">
           <Logo href="/admin" />
-          <form action={logoutAction} className="md:hidden">
+          <form action={logoutAction} className="lg:hidden">
             <button className="btn-ghost" aria-label="Déconnexion">
               <LogOut className="size-4" />
             </button>
           </form>
         </div>
-        <div className="px-3 pb-3 md:flex-1">
+        <div className="px-3 pb-2 lg:flex-1 lg:pb-3">
           <AdminNav />
         </div>
-        <div className="hidden space-y-1 border-t border-line p-3 md:block">
+        <div className="hidden space-y-1 border-t border-line p-3 lg:block">
           <a
             href="/"
             target="_blank"
@@ -39,7 +39,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           </form>
         </div>
       </aside>
-      <main className="w-full max-w-5xl flex-1 px-4 py-6 md:px-10 md:py-10">{children}</main>
+      <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</main>
     </div>
   );
 }

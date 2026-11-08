@@ -15,7 +15,7 @@ const NAV = [
 export function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex gap-1 overflow-x-auto md:flex-col">
+    <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 [scrollbar-width:none] lg:mx-0 lg:flex-col lg:px-0">
       {NAV.map(({ href, label, icon: Icon }) => {
         const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
         return (
@@ -23,7 +23,7 @@ export function AdminNav() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+            className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 lg:gap-3 lg:py-2.5 text-sm font-medium transition ${
               active ? "bg-blue-soft text-blue" : "text-slate hover:bg-mist"
             }`}
           >

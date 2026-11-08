@@ -122,7 +122,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/admin"
           <ul className="mt-3 divide-y divide-line">
             {toValidate.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 basis-full sm:basis-auto">
                   <p className="font-semibold text-ink">
                     {b.name} · {formatFCFA(b.eventType.deposit ?? 0)}
                   </p>
@@ -142,7 +142,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/admin"
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex w-full flex-wrap items-center justify-end gap-1 sm:w-auto">
                   <ContactButtons phone={b.phone} />
                   {b.paymentRef && (
                     <form action={confirmPaymentAction}>
@@ -180,7 +180,12 @@ export default async function DashboardPage({ searchParams }: PageProps<"/admin"
             </p>
             <p className="text-sm text-muted">{formatDate(next.startTime)}</p>
           </div>
-          <a href={whatsappUrl(next.phone, reminder(next))} target="_blank" rel="noopener" className="btn">
+          <a
+            href={whatsappUrl(next.phone, reminder(next))}
+            target="_blank"
+            rel="noopener"
+            className="btn w-full sm:w-auto"
+          >
             <BellRing className="size-4" /> Rappel WhatsApp
           </a>
         </div>

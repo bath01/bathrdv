@@ -64,8 +64,63 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
           <p className="mt-1 text-sm text-muted">Les clients apparaissent ici après leur première réservation.</p>
         </div>
       ) : (
-        <div className="card overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
+        <>
+        {/* Phones: one card per client */}
+        <ul className="space-y-3 md:hidden">
+          {list.map((c) => (
+            <li key={c.phone} className="card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-ink">
+                    {c.name}
+                    {c.total >= 3 && c.absences === 0 && (
+                      <span className="chip ml-2 bg-success-soft text-success">Fidèle</span>
+                    )}
+                  </p>
+                  <p className="text-sm text-muted">{formatPhone(c.phone)}</p>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <a href={`tel:${c.phone}`} className="btn-ghost px-2.5" aria-label={`Appeler ${c.name}`}>
+                    <Phone className="size-4" />
+                  </a>
+                  <a
+                    href={whatsappUrl(c.phone)}
+                    target="_blank"
+                    rel="noopener"
+                    className="btn-ghost px-2.5"
+                    aria-label={`WhatsApp ${c.name}`}
+                  >
+                    <MessageCircle className="size-4" />
+                  </a>
+                </div>
+              </div>
+              <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl bg-mist p-3 text-sm">
+                <div>
+                  <dt className="text-xs text-muted">RDV</dt>
+                  <dd className="font-semibold text-ink tabular-nums">{c.total}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">Absences</dt>
+                  <dd className={`font-semibold tabular-nums ${c.absences > 0 ? "text-danger" : "text-ink"}`}>
+                    {c.absences}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">Dernière visite</dt>
+                  <dd className="text-slate">{c.last ? formatDate(c.last) : "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">Prochain RDV</dt>
+                  <dd className="text-slate">{c.next ? formatDate(c.next) : "—"}</dd>
+                </div>
+              </dl>
+            </li>
+          ))}
+        </ul>
+
+        {/* Tablets and computers: table */}
+        <div className="card hidden overflow-x-auto md:block">
+          <table className="w-full text-left text-sm">
             <thead className="border-b border-line text-xs text-muted uppercase">
               <tr>
                 <th className="px-4 py-3 font-semibold">Client</th>
@@ -111,6 +166,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

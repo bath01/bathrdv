@@ -26,7 +26,7 @@ export default async function EventTypesPage() {
         {eventTypes.map((e) => (
           <article key={e.id} className={`card overflow-hidden ${e.active ? "" : "bg-mist/60"}`}>
             <div className="flex flex-wrap items-center gap-4 p-5">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 basis-full sm:basis-auto">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="font-semibold text-ink">{e.title}</h2>
                   {!e.active && <span className="chip">Masqué</span>}
