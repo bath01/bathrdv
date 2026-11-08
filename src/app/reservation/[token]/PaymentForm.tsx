@@ -7,7 +7,7 @@ import { submitPaymentAction, type PaymentState } from "@/app/actions";
 type Provider = { id: string; label: string; color: string; number: string };
 
 /** Mobile Money instructions + form to send the transaction reference. */
-export function PaymentForm({ bookingId, amount, providers }: { bookingId: string; amount: string; providers: Provider[] }) {
+export function PaymentForm({ token, amount, providers }: { token: string; amount: string; providers: Provider[] }) {
   const [method, setMethod] = useState(providers[0]?.id ?? "");
   const [copied, setCopied] = useState(false);
   const [state, formAction, pending] = useActionState<PaymentState, FormData>(submitPaymentAction, {});
@@ -23,7 +23,7 @@ export function PaymentForm({ bookingId, amount, providers }: { bookingId: strin
 
   return (
     <form action={formAction} className="mt-4 space-y-4">
-      <input type="hidden" name="id" value={bookingId} />
+      <input type="hidden" name="token" value={token} />
       <input type="hidden" name="method" value={method} />
 
       <fieldset>

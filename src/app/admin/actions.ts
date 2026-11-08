@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { checkPassword, createSession, destroySession, requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { clientIp, hit, minutes, reset } from "@/lib/rate-limit";
 import { ivorianHolidays } from "@/lib/ci";
 import { isValidDate, isValidTime, todayInZone } from "@/lib/time";
 
@@ -14,8 +15,25 @@ import { isValidDate, isValidTime, todayInZone } from "@/lib/time";
 export type FormState = { error?: string; ok?: boolean };
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const password = String(formData.get("password") ?? "");
-  if (!checkPassword(password)) return { error: "Mot de passe incorrect." };
+  const ip = await clientIp();
+  // 5 tries per IP every 15 min, and 30 tries in total every 15 min (distributed attacks).
+  const perIp = hit(`login:${ip}`, 5, 15 * 60_000);
+  const global = hit("login:all", 30, 15 * 60_000);
+  if (!perIp.ok || !global.ok) {
+    const wait = minutes(Math.max(perIp.retryAfter, global.retryAfter));
+    console.warn(JSON.stringify({ event: "login_blocked", ip }));
+    return { error: `Trop de tentatives. Réessayez dans ${wait} min.` };
+  }
+
+  const password = String(formData.get("password") ?? "").slice(0, 200);
+  if (!checkPassword(password)) {
+    console.warn(JSON.stringify({ event: "login_failed", ip }));
+    // Slow down guessing a little more.
+    await new Promise((r) => setTimeout(r, 800));
+    return { error: "Mot de passe incorrect." };
+  }
+  reset(`login:${ip}`);
+  console.info(JSON.stringify({ event: "login_ok", ip }));
   await createSession();
   redirect("/admin");
 }

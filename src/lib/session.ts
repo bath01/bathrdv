@@ -10,7 +10,8 @@ function secret() {
   if (!value || value.length < 32) {
     throw new Error("SESSION_SECRET must be set (at least 32 characters).");
   }
-  return value;
+  // The admin password is part of the key: changing it logs out every open session.
+  return `${value}:${process.env.ADMIN_PASSWORD ?? ""}`;
 }
 
 export function sign(payload: string) {

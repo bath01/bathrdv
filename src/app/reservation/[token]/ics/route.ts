@@ -2,9 +2,9 @@ import { icsFile } from "@/lib/calendar-links";
 import { db } from "@/lib/db";
 
 // Downloads the booking as an .ics file for Apple Calendar, Outlook, phones.
-export async function GET(_req: Request, ctx: RouteContext<"/reservation/[id]/ics">) {
-  const { id } = await ctx.params;
-  const booking = await db.booking.findUnique({ where: { id }, include: { eventType: true } });
+export async function GET(_req: Request, ctx: RouteContext<"/reservation/[token]/ics">) {
+  const { token } = await ctx.params;
+  const booking = await db.booking.findUnique({ where: { token }, include: { eventType: true } });
   if (!booking || booking.status !== "CONFIRMED") return new Response("Introuvable", { status: 404 });
 
   const body = icsFile({

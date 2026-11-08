@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { MOBILE_MONEY } from "@/lib/ci";
+import { clientIp, hit, minutes } from "@/lib/rate-limit";
 import { getSettings } from "@/lib/settings";
 import { getAvailableSlots, holdsSlot, isBookableDate } from "@/lib/slots";
 import { isValidDate } from "@/lib/time";
@@ -12,7 +13,8 @@ import { isValidDate } from "@/lib/time";
 // Public server actions: used by the booking pages, no login required.
 
 export async function getSlotsAction(eventTypeId: string, date: string) {
-  if (!isValidDate(date)) return [];
+  if (typeof eventTypeId !== "string" || typeof date !== "string" || !isValidDate(date)) return [];
+  if (!hit(`slots:${await clientIp()}`, 120, 60_000).ok) return [];
   const slots = await getAvailableSlots(eventTypeId, date);
   return slots.map((s) => s.toISOString());
 }
@@ -43,6 +45,11 @@ const bookingSchema = z.object({
 export type BookingState = { error?: string; slotTaken?: boolean };
 
 export async function bookAction(_prev: BookingState, formData: FormData): Promise<BookingState> {
+  // Anti-spam: 5 bookings per IP per hour.
+  const limit = hit(`book:${await clientIp()}`, 5, 60 * 60_000);
+  if (!limit.ok) {
+    return { error: `Trop de réservations depuis cette connexion. Réessayez dans ${minutes(limit.retryAfter)} min.` };
+  }
   const parsed = bookingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Vérifiez le formulaire." };
@@ -67,10 +74,10 @@ export async function bookAction(_prev: BookingState, formData: FormData): Promi
   const { pendingMinutes } = await getSettings();
   const endTime = new Date(startTime.getTime() + eventType.duration * 60_000);
 
-  let bookingId: string;
+  let bookingToken: string;
   try {
     // Serializable transaction: two visitors cannot book the same slot.
-    bookingId = await db.$transaction(
+    bookingToken = await db.$transaction(
       async (tx) => {
         const clash = await tx.booking.count({
           where: { ...holdsSlot(pendingMinutes), startTime: { lt: endTime }, endTime: { gt: startTime } },
@@ -90,7 +97,7 @@ export async function bookAction(_prev: BookingState, formData: FormData): Promi
             endTime,
           },
         });
-        return booking.id;
+        return booking.token;
       },
       { isolationLevel: "Serializable" },
     );
@@ -98,20 +105,20 @@ export async function bookAction(_prev: BookingState, formData: FormData): Promi
     return { error: "Ce créneau vient d'être pris. Choisissez une autre heure.", slotTaken: true };
   }
 
-  redirect(`/reservation/${bookingId}?nouveau=1`);
+  redirect(`/reservation/${bookingToken}?nouveau=1`);
 }
 
-/** Visitor cancels from the confirmation page. The booking id acts as the secret. */
+/** Visitor cancels from the booking page. The random token in the link acts as the secret. */
 export async function cancelByVisitorAction(formData: FormData) {
-  const id = String(formData.get("id"));
-  const booking = await db.booking.findUnique({ where: { id } });
+  const token = String(formData.get("token") ?? "");
+  const booking = await db.booking.findUnique({ where: { token } });
   if (!booking || booking.status === "CANCELLED" || booking.startTime < new Date()) return;
-  await db.booking.update({ where: { id }, data: { status: "CANCELLED", cancelledBy: "visitor" } });
-  revalidatePath(`/reservation/${id}`);
+  await db.booking.update({ where: { token }, data: { status: "CANCELLED", cancelledBy: "visitor" } });
+  revalidatePath(`/reservation/${token}`);
 }
 
 const paymentSchema = z.object({
-  id: z.string().min(1),
+  token: z.string().min(1).max(64),
   method: z.enum(MOBILE_MONEY.map((m) => m.id) as [string, ...string[]], "Choisissez le moyen de paiement."),
   ref: z.string().trim().min(4, "Saisissez la référence de la transaction.").max(60),
 });
@@ -122,20 +129,23 @@ export type PaymentState = { error?: string; ok?: boolean };
 export async function submitPaymentAction(_prev: PaymentState, formData: FormData): Promise<PaymentState> {
   const parsed = paymentSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
-  const { id, method, ref } = parsed.data;
+  const { token, method, ref } = parsed.data;
+  if (!hit(`pay:${await clientIp()}`, 10, 60 * 60_000).ok) {
+    return { error: "Trop de tentatives. Réessayez plus tard ou contactez-nous sur WhatsApp." };
+  }
 
-  const booking = await db.booking.findUnique({ where: { id } });
+  const booking = await db.booking.findUnique({ where: { token } });
   if (!booking || booking.status !== "PENDING") return { error: "Ce rendez-vous n'attend plus de paiement." };
 
   // Past the payment delay, the slot was released and may be taken: start again.
   const { pendingMinutes } = await getSettings();
   if (!booking.paymentRef && booking.createdAt.getTime() < Date.now() - pendingMinutes * 60_000) {
-    await db.booking.update({ where: { id }, data: { status: "CANCELLED", cancelledBy: "visitor" } });
-    revalidatePath(`/reservation/${id}`);
+    await db.booking.update({ where: { token }, data: { status: "CANCELLED", cancelledBy: "visitor" } });
+    revalidatePath(`/reservation/${token}`);
     return { error: `Délai de paiement de ${pendingMinutes} min dépassé. Le créneau a été libéré : réservez à nouveau.` };
   }
 
-  await db.booking.update({ where: { id }, data: { paymentMethod: method, paymentRef: ref } });
-  revalidatePath(`/reservation/${id}`);
+  await db.booking.update({ where: { token }, data: { paymentMethod: method, paymentRef: ref } });
+  revalidatePath(`/reservation/${token}`);
   return { ok: true };
 }

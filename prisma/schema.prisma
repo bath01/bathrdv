@@ -62,6 +62,8 @@ enum BookingStatus {
 
 model Booking {
   id            String        @id @default(cuid())
+  // Random secret used in the visitor link (/reservation/<token>). Never guessable.
+  token         String        @unique @default(uuid(4))
   eventType     EventType     @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
   eventTypeId   String
   name          String

@@ -27,12 +27,12 @@ import { PaymentForm } from "./PaymentForm";
 
 export const metadata: Metadata = { title: "Votre rendez-vous", robots: { index: false } };
 
-// Booking page for the visitor. The cuid in the URL is hard to guess and acts as the key.
-export default async function ReservationPage({ params, searchParams }: PageProps<"/reservation/[id]">) {
-  const { id } = await params;
+// Booking page for the visitor. The random token in the URL is the only key.
+export default async function ReservationPage({ params, searchParams }: PageProps<"/reservation/[token]">) {
+  const { token } = await params;
   const isNew = (await searchParams).nouveau === "1";
   const [booking, settings] = await Promise.all([
-    db.booking.findUnique({ where: { id }, include: { eventType: true } }),
+    db.booking.findUnique({ where: { token }, include: { eventType: true } }),
     getSettings(),
   ]);
   if (!booking) notFound();
@@ -141,7 +141,7 @@ export default async function ReservationPage({ params, searchParams }: PageProp
             <section className="mt-6 border-t border-line pt-6">
               <h2 className="font-semibold text-ink">Payer l&apos;acompte de {formatFCFA(eventType.deposit)}</h2>
               <PaymentForm
-                bookingId={booking.id}
+                token={booking.token}
                 amount={formatFCFA(eventType.deposit)}
                 providers={acceptedMobileMoney(settings).map(({ id, label, color, number }) => ({ id, label, color, number }))}
               />
@@ -173,7 +173,7 @@ export default async function ReservationPage({ params, searchParams }: PageProp
                     >
                       <CalendarPlus className="size-4" /> Google Agenda
                     </a>
-                    <a className="btn-ghost" href={`/reservation/${booking.id}/ics`}>
+                    <a className="btn-ghost" href={`/reservation/${booking.token}/ics`}>
                       <Download className="size-4" /> iPhone / Outlook
                     </a>
                   </div>
@@ -194,7 +194,7 @@ export default async function ReservationPage({ params, searchParams }: PageProp
 
               <div className="mt-6 flex justify-end border-t border-line pt-5">
                 <form action={cancelByVisitorAction}>
-                  <input type="hidden" name="id" value={booking.id} />
+                  <input type="hidden" name="token" value={booking.token} />
                   <ConfirmButton message="Annuler ce rendez-vous ? Le créneau sera libéré." className="btn-danger">
                     Annuler le rendez-vous
                   </ConfirmButton>
