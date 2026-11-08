@@ -1,0 +1,53 @@
+# VPS override for docker-compose.prod.yml, hardened like the other sites on the server.
+# - The app publishes no port: only the main proxy reaches it, on the "bathrdv_front" network.
+# - Database and migrations stay on an internal network without Internet access.
+# Start:
+#   docker compose -f docker-compose.prod.yml -f deploy/docker-compose.vps.yml --env-file .env.docker up -d --build
+name: bathrdv-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  db:
+    container_name: bathrdv-db
+    logging: *logging
+    networks: [internal]
+    security_opt: [no-new-privileges:true]
+
+  migrate:
+    container_name: bathrdv-migrate
+    logging: *logging
+    networks: [internal]
+    security_opt: [no-new-privileges:true]
+
+  app:
+    container_name: bathrdv-app
+    logging: *logging
+    ports: !reset []
+    networks: [front, internal]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache:uid=1001,gid=1001
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  # Main proxy -> app. No Internet access.
+  front:
+    name: bathrdv_front
+    internal: true
+  # App and migrations -> database. No Internet access.
+  internal:
+    name: bathrdv_internal
+    internal: true
