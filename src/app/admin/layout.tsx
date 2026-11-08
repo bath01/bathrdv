@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Logo } from "@/components/Logo";
 import { requireAdmin } from "@/lib/auth";
 import { logoutAction } from "./actions";
-import { AdminNav } from "./AdminNav";
+import { AdminNav, AdminTabBar } from "./AdminNav";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
@@ -12,19 +12,33 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   return (
     <div className="flex min-h-full flex-col lg:flex-row">
-      <aside className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur lg:flex lg:h-screen lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-b-0 lg:bg-surface">
-        <div className="flex items-center justify-between px-4 py-3 lg:px-5 lg:py-6">
+      {/* Phones and tablets: compact top bar + bottom tab bar */}
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-surface/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur lg:hidden">
+        <div className="py-3">
           <Logo href="/admin" />
-          <form action={logoutAction} className="lg:hidden">
-            <button className="btn-ghost" aria-label="Déconnexion">
+        </div>
+        <div className="flex items-center gap-1">
+          <a href="/" target="_blank" className="btn-ghost px-2.5" aria-label="Voir la page publique">
+            <ExternalLink className="size-4" />
+          </a>
+          <form action={logoutAction}>
+            <button className="btn-ghost px-2.5" aria-label="Déconnexion">
               <LogOut className="size-4" />
             </button>
           </form>
         </div>
-        <div className="px-3 pb-2 lg:flex-1 lg:pb-3">
+      </header>
+      <AdminTabBar />
+
+      {/* Computers: sidebar */}
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
+        <div className="px-5 py-6">
+          <Logo href="/admin" />
+        </div>
+        <div className="flex-1 px-3 pb-3">
           <AdminNav />
         </div>
-        <div className="hidden space-y-1 border-t border-line p-3 lg:block">
+        <div className="space-y-1 border-t border-line p-3">
           <a
             href="/"
             target="_blank"
@@ -39,7 +53,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           </form>
         </div>
       </aside>
-      <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</main>
+      <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 px-4 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:py-10">{children}</main>
     </div>
   );
 }
