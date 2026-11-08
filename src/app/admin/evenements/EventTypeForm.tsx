@@ -72,7 +72,7 @@ export function EventTypeForm({ initial }: { initial?: Initial }) {
             required
             value={slug}
             placeholder="consultation-decouverte"
-            className="w-full rounded-r-xl bg-surface px-2 py-2.5 text-sm outline-none"
+            className="w-full rounded-r-xl bg-surface px-2 py-2.5 text-base outline-none sm:text-sm"
             onChange={(e) => {
               setSlugEdited(true);
               setSlug(e.target.value);
