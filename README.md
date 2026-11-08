@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BATHRDV
 
-## Getting Started
+Application simple de prise de rendez-vous en ligne, inspirée de Cal.com.
 
-First, run the development server:
+- Types de rendez-vous (durée, lieu, lien public `/mon-lien`)
+- Horaires hebdomadaires et jours fermés (congés, jours fériés)
+- Règles : délai minimum, pause entre deux RDV, réservation jusqu'à N jours
+- Page de réservation avec calendrier et créneaux libres en temps réel
+- Page de confirmation : ajout à Google Agenda ou .ics, annulation par le client
+- Tableau de bord admin : statistiques, prochain RDV, appel et WhatsApp en un clic
+- Espace admin protégé par mot de passe (un seul utilisateur)
+
+Adapté à la Côte d'Ivoire :
+
+- Prix en FCFA et acompte par Mobile Money (Wave, Orange Money, MTN MoMo, Moov Money)
+- Rappels et récapitulatifs WhatsApp en un clic (messages pré-remplis)
+- Pause déjeuner dans les horaires
+- Jours fériés ivoiriens ajoutés en un clic
+- Rendez-vous à domicile avec commune d'Abidjan et quartier / repère
+- Suivi des présences et absences, fiche clients avec clients fidèles
+
+Stack : Next.js 16, Prisma 7, PostgreSQL, Tailwind CSS 4.
+
+## Démarrer en local
+
+Prérequis : Node.js 20+, Docker.
 
 ```bash
+cp .env.example .env          # puis remplir les valeurs
+docker compose up -d          # PostgreSQL (port 5434)
+npm install
+npm run db:migrate            # crée les tables
+npm run db:seed               # données minimales
+npm run db:demo               # OU démo complète (efface toutes les données !)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Site : http://localhost:3000
+- Admin : http://localhost:3000/admin (mot de passe = `ADMIN_PASSWORD`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+prisma/schema.prisma        Modèles : EventType, Availability, Booking
+src/lib/slots.ts            Calcul des créneaux libres
+src/lib/auth.ts             Connexion admin (cookie signé)
+src/lib/settings.ts         Règles de réservation
+src/app/[slug]/             Page de réservation publique
+src/app/admin/              Espace admin
+```
 
-## Learn More
+## Personnaliser
 
-To learn more about Next.js, take a look at the following resources:
+- Couleurs : variables CSS dans `src/app/globals.css` (`--blue`, `--slate`, etc.)
+- Logo : `public/logo.png`, `public/logo-icon.png`, `src/app/icon.png`
+- Fuseau horaire : `APP_TIMEZONE` dans `.env`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Production avec Docker
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+L'application, les migrations et PostgreSQL tournent dans des conteneurs.
 
-## Deploy on Vercel
+```bash
+cp .env.docker.example .env.docker   # puis mettre des mots de passe forts
+docker compose -f docker-compose.prod.yml --env-file .env.docker up -d --build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Le service `migrate` applique les migrations, puis l'app démarre.
+- Le cookie admin est `Secure` en production : en ligne, servez le site en HTTPS (sinon la connexion admin échoue). `localhost` fonctionne sans HTTPS.
+- Données de démo (efface tout !) : `docker compose -f docker-compose.prod.yml --env-file .env.docker run --rm migrate npm run db:demo`

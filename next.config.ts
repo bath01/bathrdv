@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Cache Components off: every page reads fresh data from the database.
+  cacheComponents: false,
+  // Self-contained server in .next/standalone, used by the Docker image.
+  output: "standalone",
   turbopack: {
     rules: {
       "*.css": {

@@ -1,0 +1,17 @@
+# Local development services for BATHRDV.
+# Start with: docker compose up -d
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bathrdv
+      POSTGRES_PASSWORD: bathrdv
+      POSTGRES_DB: bathrdv
+    ports:
+      - "5434:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:

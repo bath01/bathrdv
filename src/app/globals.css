@@ -1,26 +1,117 @@
 @import "tailwindcss";
 
+/*
+  BATHRDV design tokens, taken from the logo:
+  slate monitor (#3D4652) + blue swoosh (#0B5FD9 -> #1E8FFF).
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --mist: #f2f5f9;
+  --surface: #ffffff;
+  --ink: #1b2430;
+  --slate: #3d4652;
+  --muted: #667385;
+  --line: #dfe5ee;
+  --blue: #0b5fd9;
+  --blue-bright: #1e8fff;
+  --blue-soft: #e8f1fe;
+  --danger: #c2321f;
+  --danger-soft: #fdecea;
+  --success: #12804a;
+  --success-soft: #e6f6ee;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-mist: var(--mist);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-slate: var(--slate);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-blue: var(--blue);
+  --color-blue-bright: var(--blue-bright);
+  --color-blue-soft: var(--blue-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --shadow-card: 0 1px 2px rgb(27 36 48 / 0.04), 0 8px 24px -12px rgb(27 36 48 / 0.12);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--mist);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--blue-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-surface shadow-card;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-blue px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0a54c0] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-3.5 py-2 text-sm font-medium text-slate transition hover:border-slate/30 hover:bg-mist active:scale-[0.98];
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-danger transition hover:bg-danger-soft;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-blue focus:ring-4 focus:ring-blue/10;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate;
+  }
+  .hint {
+    @apply mt-1 text-xs text-muted;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold tracking-wide text-muted uppercase;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-mist px-2.5 py-1 text-xs font-medium text-slate;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-rise {
+  animation: rise 0.35s ease-out both;
+}
+
+@keyframes topbar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
 }

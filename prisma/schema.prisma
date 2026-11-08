@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// A kind of meeting people can book, e.g. "Appel 30 min".
+model EventType {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  description String?
+  duration    Int // minutes
+  location    String? // e.g. "Google Meet", "Téléphone", an address
+  price       Int? // FCFA, null = free
+  deposit     Int? // FCFA paid by Mobile Money to hold the slot, null = none
+  atHome      Boolean   @default(false) // visitor gives commune + quartier
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  bookings    Booking[]
+}
+
+// Weekly opening hours. One row per time range on a weekday.
+model Availability {
+  id        String @id @default(cuid())
+  weekday   Int // 0 = Sunday ... 6 = Saturday
+  startTime String // "HH:mm" in APP_TIMEZONE
+  endTime   String // "HH:mm" in APP_TIMEZONE
+}
+
+// Whole days without bookings: holidays, leave, etc.
+model BlockedDate {
+  id     String  @id @default(cuid())
+  date   String  @unique // "YYYY-MM-DD" in APP_TIMEZONE
+  reason String?
+}
+
+// Single row (id = 1) of booking rules.
+model Settings {
+  id                Int     @id @default(1)
+  businessName      String  @default("BATHRDV")
+  phone             String? // shown to visitors, used for the WhatsApp button
+  address           String? // shown for in-person meetings
+  waveNumber        String?
+  orangeMoneyNumber String?
+  mtnMoneyNumber    String?
+  moovMoneyNumber   String?
+  pendingMinutes    Int     @default(60) // unpaid deposit releases the slot after N minutes
+  minNoticeHours    Int     @default(2) // no booking less than N hours ahead
+  bufferMinutes     Int     @default(0) // free time kept after each meeting
+  bookingWindowDays Int     @default(30) // how far ahead visitors can book
+}
+
+enum BookingStatus {
+  PENDING // waiting for the Mobile Money deposit
+  CONFIRMED
+  CANCELLED
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  eventType     EventType     @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+  eventTypeId   String
+  name          String
+  phone         String
+  email         String?
+  notes         String?
+  address       String? // commune + quartier for home visits
+  paymentMethod String? // "wave" | "orange" | "mtn" | "moov"
+  paymentRef    String? // transaction ID sent by the visitor
+  attended      Boolean? // null = not marked yet
+  startTime     DateTime
+  endTime       DateTime
+  status        BookingStatus @default(CONFIRMED)
+  cancelledBy   String? // "admin" or "visitor"
+  createdAt     DateTime      @default(now())
+
+  @@index([startTime])
+  @@index([phone])
+}
